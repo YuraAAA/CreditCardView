@@ -1,4 +1,4 @@
-package com.aizenberg.cardcreditview;
+package com.aizenberg.cardcreditview.model;
 
 public class Card {
 

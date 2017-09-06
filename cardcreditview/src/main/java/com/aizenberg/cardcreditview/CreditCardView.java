@@ -7,6 +7,7 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Point;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
@@ -32,6 +33,10 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.aizenberg.cardcreditview.model.Card;
+import com.aizenberg.cardcreditview.validation.DefaultValidationRuleImpl;
+import com.aizenberg.cardcreditview.validation.IValidationRule;
 
 /**
  * Created by Yuriy Aizenberg
@@ -68,8 +73,9 @@ public class CreditCardView extends LinearLayout {
     private TextView labelSecureSubmission;
     private CardView cardGray;
     private CardView cardBlue;
-    
-    
+    private IValidationRule validationRule;
+    private ISubmitCallback submitCallback;
+
     public CreditCardView(Context context) {
         super(context);
         init();
@@ -85,8 +91,18 @@ public class CreditCardView extends LinearLayout {
         init();
     }
 
+    public void setValidationRule(@NonNull IValidationRule validationRule) {
+        this.validationRule = validationRule;
+    }
+
+    public void setSubmitCallback(ISubmitCallback submitCallback) {
+        this.submitCallback = submitCallback;
+    }
+
     private void init() {
         inflate(getContext(), R.layout.view_credit_card, this);
+        card = new Card();
+        validationRule = new DefaultValidationRuleImpl(card);
         textCardNumber = (TextView) findViewById(R.id.text_card_number);
         textExpiredDate = (TextView) findViewById(R.id.text_expired_date);
         textCardHolder = (TextView) findViewById(R.id.text_card_holder);
@@ -115,11 +131,49 @@ public class CreditCardView extends LinearLayout {
         afterInit();
     }
 
+
+    private void flipToGray() {
+        if (!showingGray && !outSet.isRunning() && !inSet.isRunning()) {
+            showingGray = true;
+
+            cardBlue.setCardElevation(0);
+            cardGray.setCardElevation(0);
+
+            outSet.setTarget(cardBlue);
+            outSet.start();
+
+            inSet.setTarget(cardGray);
+            inSet.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    cardGray.setCardElevation(convertDpToPixel(12, getContext()));
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+
+                }
+
+                @Override
+                public void onAnimationRepeat(Animator animation) {
+
+                }
+            });
+            inSet.start();
+        }
+    }
+
     private void afterInit() {
-        OnClickListener onHelpClickListener = new OnClickListener() {
+        OnClickListener onHelpClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Toast.makeText(getContext(), "The CVV Number (\"Card Verification Value\") is a 3 or 4 digit number on your credit and debit cards", Toast.LENGTH_LONG).show();
+
             }
         };
         iconHelpBlue.setOnClickListener(onHelpClickListener);
@@ -135,6 +189,8 @@ public class CreditCardView extends LinearLayout {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (s.length() != 0) {
                     flipToBlue();
+                } else {
+                    flipToGray();
                 }
             }
 
@@ -152,6 +208,35 @@ public class CreditCardView extends LinearLayout {
                 lock = false;
             }
         });
+
+
+        inputEditExpiredDate.addTextChangedListener(new TextWatcher() {
+
+            private boolean lock;
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (lock || s.length() > 4) {
+                    return;
+                }
+                lock = true;
+                if (s.length() > 2 && s.toString().charAt(2) != '/') {
+                    s.insert(2, "/");
+                }
+                lock = false;
+            }
+        });
+
+
         inputEditCardNumber.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -222,73 +307,9 @@ public class CreditCardView extends LinearLayout {
             }
         });
 
+        WindowManager windowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
 
-    }
-
-
-
-    private void flipToBlue() {
-        if (showingGray && !outSet.isRunning() && !inSet.isRunning()) {
-            showingGray = false;
-
-            cardGray.setCardElevation(0);
-            cardBlue.setCardElevation(0);
-
-            outSet.setTarget(cardGray);
-            outSet.start();
-
-            inSet.setTarget(cardBlue);
-            inSet.addListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(Animator animation) {
-
-                }
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    cardBlue.setCardElevation(convertDpToPixel(12, getContext()));
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-
-                }
-
-                @Override
-                public void onAnimationRepeat(Animator animation) {
-
-                }
-            });
-            inSet.start();
-        }
-        inputEditExpiredDate.addTextChangedListener(new TextWatcher() {
-
-            private boolean lock;
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (lock || s.length() > 4) {
-                    return;
-                }
-                lock = true;
-                if (s.length() > 2 && s.toString().charAt(2) != '/') {
-                    s.insert(2, "/");
-                }
-                lock = false;
-            }
-        });
-        WindowManager systemService = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-
-        Display display = systemService.getDefaultDisplay();
+        Display display = windowManager.getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
         int width = size.x;
@@ -370,6 +391,27 @@ public class CreditCardView extends LinearLayout {
             }
         };
 
+        OnKeyListener onKeyListener = new OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_DEL && v instanceof TextInputEditText) {
+                    Editable text = ((TextInputEditText) v).getText();
+                    if (text.length() == 0) {
+                        int currentItem = viewPager.getCurrentItem();
+                        if (currentItem > 0) {
+                            viewPager.setCurrentItem(viewPager.getCurrentItem() - 1);
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+        };
+
+        inputEditExpiredDate.setOnKeyListener(onKeyListener);
+        inputEditCardHolder.setOnKeyListener(onKeyListener);
+        inputEditCvvCode.setOnKeyListener(onKeyListener);
+
         inputEditCardNumber.setOnEditorActionListener(onEditorActionListener);
         inputEditExpiredDate.setOnEditorActionListener(onEditorActionListener);
         inputEditCardHolder.setOnEditorActionListener(onEditorActionListener);
@@ -379,10 +421,55 @@ public class CreditCardView extends LinearLayout {
 
         inSet = (AnimatorSet) AnimatorInflater.loadAnimator(getContext(), R.animator.card_flip_in);
         outSet = (AnimatorSet) AnimatorInflater.loadAnimator(getContext(), R.animator.card_flip_out);
+
+    }
+
+
+
+    private void flipToBlue() {
+        if (showingGray && !outSet.isRunning() && !inSet.isRunning()) {
+            showingGray = false;
+
+            cardGray.setCardElevation(0);
+            cardBlue.setCardElevation(0);
+
+            outSet.setTarget(cardGray);
+            outSet.start();
+
+            inSet.setTarget(cardBlue);
+            inSet.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    cardBlue.setCardElevation(convertDpToPixel(12, getContext()));
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+
+                }
+
+                @Override
+                public void onAnimationRepeat(Animator animation) {
+
+                }
+            });
+            inSet.start();
+        }
     }
 
     private void submit() {
-
+        card.setCardNumber(inputEditCardNumber.getText().toString());
+        card.setExpiredDate(inputEditExpiredDate.getText().toString());
+        card.setCardHolder(inputEditCardHolder.getText().toString());
+        card.setCvvCode(inputEditCvvCode.getText().toString());
+        if (submitCallback != null) {
+            submitCallback.onReady(card, validationRule.isSummaryDataValid());
+        }
     }
 
 

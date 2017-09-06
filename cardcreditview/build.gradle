@@ -1,5 +1,32 @@
 apply plugin: 'com.android.library'
 
+
+ext {
+    bintrayRepo = 'maven'
+    bintrayName = 'CreditCardAndroid'
+
+    publishedGroupId = 'com.aizenberg'
+    libraryName = 'creditcardview'
+    artifact = 'creditcardview'
+
+    libraryDescription = 'Simple view injector  library for android'
+
+    siteUrl = 'https://github.com/YuraAAA/CreditCardView'
+    gitUrl = 'https://github.com/YuraAAA/CreditCardView.git'
+
+    libraryVersion = '1.0.1'
+
+    developerId = 'yuriy-aizenberg'
+    developerName = 'Yuriy Aizenberg'
+    developerEmail = 'yuriy.aizenberg@gmail.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+
+}
+
+
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.3"
@@ -8,7 +35,7 @@ android {
         minSdkVersion 17
         targetSdkVersion 25
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.1"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -27,3 +54,6 @@ dependencies {
     compile 'com.android.support:design:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
 }
+
+apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
+apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'

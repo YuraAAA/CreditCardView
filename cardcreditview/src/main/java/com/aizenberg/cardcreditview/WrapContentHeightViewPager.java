@@ -26,32 +26,25 @@ public class WrapContentHeightViewPager extends ViewPager {
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
             child.measure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-            int h = child.getMeasuredHeight();
-            if (h > height) height = h;
+            int measuredHeight = child.getMeasuredHeight();
+            if (measuredHeight > height) height = measuredHeight;
         }
 
         heightMeasureSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
-
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (this.enabled) {
-            return super.onTouchEvent(event);
-        }
+        return this.enabled && super.onTouchEvent(event);
 
-        return false;
     }
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
-        if (this.enabled) {
-            return super.onInterceptTouchEvent(event);
-        }
+        return this.enabled && super.onInterceptTouchEvent(event);
 
-        return false;
     }
 
     public void setPagingEnabled(boolean enabled) {
